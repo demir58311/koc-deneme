@@ -14,35 +14,27 @@ for key, val in {
 }.items():
     if key not in st.session_state: st.session_state[key] = val
 # ==========================================
-# 2. AI BAĞLANTISI (BALYOZ YÖNTEMİ)
+# 2. AI BAĞLANTISI (YENİ ANAHTAR SÜRÜMÜ)
 # ==========================================
 ai_aktif = False
+
 if "GEMINI_KEY" in st.secrets:
     try:
+        # Anahtarı sisteme tanıtıyoruz
         genai.configure(api_key=st.secrets["GEMINI_KEY"])
         
-        # 404 HATASINI ÖNLEMEK İÇİN: 
-        # Model ismini tırnak içinde tam yol olarak yazıyoruz
-        # Ve en güncel modeli (1.5-flash) hedefliyoruz
-        model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
-            generation_config={"temperature": 0.7}
-        )
+        # En güncel model ismini kullanıyoruz
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # Bağlantıyı test et (Hata varsa direkt except'e düşer)
-        response = model.generate_content("test")
+        # AI'ya ufak bir "merhaba" diyerek testi tamamlıyoruz
+        test_response = model.generate_content("Merhaba", generation_config={"max_output_tokens": 5})
+        
         ai_aktif = True
-        st.sidebar.success("✅ Sistem Hazır: AI Aktif")
+        st.sidebar.success("✅ AI Bağlantısı Başarılı!")
     except Exception as e:
-        # Eğer yukarıdaki olmazsa eski ama stabil pro modelini dene
-        try:
-            model = genai.GenerativeModel('gemini-pro')
-            model.generate_content("test")
-            ai_aktif = True
-            st.sidebar.warning("⚠️ Stabil Mod (Pro) Aktif")
-        except:
-            st.sidebar.error(f"❌ Bağlantı Hatası: API Anahtarınızda bir sorun olabilir.")
-            ai_aktif = False
+        # Eğer hala hata verirse buradaki hata mesajını okuyacağız
+        st.sidebar.error(f"⚠️ Bağlantı Sorunu: {str(e)}")
+        ai_aktif = False
 else:
     st.sidebar.error("❌ Secrets: GEMINI_KEY bulunamadı!")
 # ==========================================
