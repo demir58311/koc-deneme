@@ -14,32 +14,32 @@ for key, val in {
 }.items():
     if key not in st.session_state: st.session_state[key] = val
 # ==========================================
-# 2. AI BAĞLANTISI (KESİN ÇÖZÜM SÜRÜMÜ)
+# 2. AI BAĞLANTISI (ZORLANMIŞ V1 SÜRÜMÜ)
 # ==========================================
 if "GEMINI_KEY" not in st.secrets:
     st.sidebar.error("❌ Secrets: GEMINI_KEY bulunamadı!")
     ai_aktif = False
 else:
     try:
-        genai.configure(api_key=st.secrets["GEMINI_KEY"])
+        # API'yi en güncel v1 sürümüne zorluyoruz
+        genai.configure(api_key=st.secrets["GEMINI_KEY"], transport='rest')
         
-        # Hata veren v1beta karmaşasından kurtulmak için en basit tanımlama
+        # En yeni model ismini doğrudan deniyoruz
         model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # Modelin çalışıp çalışmadığını basit bir sorguyla test et
-        # Eğer bu satır hata verirse otomatik 'except' bloğuna atlar
-        test_response = model.generate_content("test", generation_config={"max_output_tokens": 10})
-        
+        # Basit bir test
+        test_res = model.generate_content("Hi")
         ai_aktif = True
-        st.sidebar.success("✅ AI Bağlantısı Aktif!")
+        st.sidebar.success("✅ AI Aktif (Flash)")
     except Exception as e:
-        # Eğer flash modelinde hata verirse 'gemini-pro' deniyoruz
         try:
+            # Flash olmazsa Pro modelini deniyoruz
             model = genai.GenerativeModel('gemini-pro')
+            test_res = model.generate_content("Hi")
             ai_aktif = True
-            st.sidebar.warning("⚠️ Flash modeli bulunamadı, Pro kullanılıyor.")
+            st.sidebar.warning("⚠️ Pro Modeli Aktif")
         except Exception as e2:
-            st.sidebar.error(f"⚠️ Bağlantı Hatası: {str(e2)}")
+            st.sidebar.error(f"❌ Kritik Hata: {str(e2)}")
             ai_aktif = False
 # ==========================================
 # 3. AI FONKSİYONLARI (DİNAMİK DİL DESTEKLİ)
