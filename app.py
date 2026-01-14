@@ -18,20 +18,19 @@ for key, val in {
 # 2. AI BAĞLANTISI
 # ==========================================
 # Bu kısmı mevcut kodunla değiştir
-try:
 # Mevcut try-except bloğunu bununla değiştir
+# Hatalı olan 21-25. satır arasını silip bunu yapıştır:
 try:
     if "GEMINI_KEY" in st.secrets:
         API_KEY = st.secrets["GEMINI_KEY"]
         genai.configure(api_key=API_KEY)
-        # Model ismini tam olarak belirtelim
         model = genai.GenerativeModel('gemini-1.5-flash')
         ai_aktif = True
     else:
-        st.error("Hata: Streamlit Secrets kısmında GEMINI_KEY tanımlanmamış!")
+        st.error("Secrets kısmında anahtar bulunamadı!")
         ai_aktif = False
 except Exception as e:
-    st.error(f"AI Başlatılamadı: {e}")
+    st.error(f"Bağlantı hatası: {e}")
     ai_aktif = False
     
     # Tercih sırasına göre modeli seçiyoruz
