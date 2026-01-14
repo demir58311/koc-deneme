@@ -14,31 +14,33 @@ for key, val in {
 }.items():
     if key not in st.session_state: st.session_state[key] = val
 # ==========================================
-# 2. AI BAĞLANTISI (GARANTİ SÜRÜM)
+# 2. AI BAĞLANTISI (KESİN ÇÖZÜM SÜRÜMÜ)
 # ==========================================
-try:
-    if "GEMINI_KEY" in st.secrets:
-        API_KEY = st.secrets["GEMINI_KEY"]
-        genai.configure(api_key=API_KEY)
-        
-        # 404 hatasını önlemek için alternatif isimleri deniyoruz
-        try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            # Test isteği
-            model.generate_content("test")
-            target_model = 'gemini-1.5-flash'
-        except:
-            model = genai.GenerativeModel('gemini-pro')
-            target_model = 'gemini-pro'
-            
-        ai_aktif = True
-        st.sidebar.success(f"✅ Bağlandı: {target_model}")
-    else:
-        st.sidebar.error("❌ Secrets: GEMINI_KEY bulunamadı!")
-        ai_aktif = False
-except Exception as e:
-    st.sidebar.error(f"⚠️ Teknik Hata: {str(e)}")
+if "GEMINI_KEY" not in st.secrets:
+    st.sidebar.error("❌ Secrets: GEMINI_KEY bulunamadı!")
     ai_aktif = False
+else:
+    try:
+        genai.configure(api_key=st.secrets["GEMINI_KEY"])
+        
+        # Hata veren v1beta karmaşasından kurtulmak için en basit tanımlama
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Modelin çalışıp çalışmadığını basit bir sorguyla test et
+        # Eğer bu satır hata verirse otomatik 'except' bloğuna atlar
+        test_response = model.generate_content("test", generation_config={"max_output_tokens": 10})
+        
+        ai_aktif = True
+        st.sidebar.success("✅ AI Bağlantısı Aktif!")
+    except Exception as e:
+        # Eğer flash modelinde hata verirse 'gemini-pro' deniyoruz
+        try:
+            model = genai.GenerativeModel('gemini-pro')
+            ai_aktif = True
+            st.sidebar.warning("⚠️ Flash modeli bulunamadı, Pro kullanılıyor.")
+        except Exception as e2:
+            st.sidebar.error(f"⚠️ Bağlantı Hatası: {str(e2)}")
+            ai_aktif = False
 # ==========================================
 # 3. AI FONKSİYONLARI (DİNAMİK DİL DESTEKLİ)
 # ==========================================
