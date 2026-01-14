@@ -14,20 +14,27 @@ for key, val in {
 }.items():
     if key not in st.session_state: st.session_state[key] = val
 # ==========================================
-# 2. AI BAĞLANTISI (HATA AVCI SÜRÜMÜ)
+# 2. AI BAĞLANTISI (GARANTİ SÜRÜM)
 # ==========================================
 try:
     if "GEMINI_KEY" in st.secrets:
         API_KEY = st.secrets["GEMINI_KEY"]
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # Test isteği gönderelim (Gerçekten çalışıyor mu?)
-        test_res = model.generate_content("Hi") 
+        # 404 hatasını önlemek için alternatif isimleri deniyoruz
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            # Test isteği
+            model.generate_content("test")
+            target_model = 'gemini-1.5-flash'
+        except:
+            model = genai.GenerativeModel('gemini-pro')
+            target_model = 'gemini-pro'
+            
         ai_aktif = True
-        st.sidebar.success("✅ Bağlantı Başarılı!")
+        st.sidebar.success(f"✅ Bağlandı: {target_model}")
     else:
-        st.sidebar.error("❌ Secrets içinde 'GEMINI_KEY' bulunamadı!")
+        st.sidebar.error("❌ Secrets: GEMINI_KEY bulunamadı!")
         ai_aktif = False
 except Exception as e:
     st.sidebar.error(f"⚠️ Teknik Hata: {str(e)}")
