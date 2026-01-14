@@ -20,12 +20,24 @@ for key, val in {
 try:
     API_KEY = st.secrets["GEMINI_KEY"]
     genai.configure(api_key=API_KEY)
+    
+    # Mevcut modelleri listele ve en uygun olanı otomatik seç
+    # Bu kısım 'v1beta' hatasını bypass eder
     available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-    target_model = 'gemini-1.5-flash' if 'models/gemini-1.5-flash' in available_models else 'gemini-pro'
+    
+    # Tercih sırasına göre modeli seçiyoruz
+    if 'models/gemini-1.5-flash' in available_models:
+        target_model = 'gemini-1.5-flash'
+    elif 'models/gemini-pro' in available_models:
+        target_model = 'gemini-pro'
+    else:
+        target_model = available_models[0].replace('models/', '') # Bulduğun ilk çalışan modeli al
+
     model = genai.GenerativeModel(target_model)
     ai_aktif = True
+    st.sidebar.success(f"Bağlı Model: {target_model}")
 except Exception as e:
-    st.sidebar.error(f"Bağlantı Hatası: {str(e)}")
+    st.sidebar.error(f"Kritik Bağlantı Hatası: {str(e)}")
     ai_aktif = False
 
 # ==========================================
