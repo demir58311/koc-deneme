@@ -14,35 +14,37 @@ for key, val in {
 }.items():
     if key not in st.session_state: st.session_state[key] = val
 # ==========================================
-# 2. AI BAĞLANTISI (KESİN ÇÖZÜM - MODEL FIX)
+# 2. AI BAĞLANTISI (BALYOZ YÖNTEMİ)
 # ==========================================
-if "GEMINI_KEY" not in st.secrets:
-    st.sidebar.error("❌ Secrets: GEMINI_KEY bulunamadı!")
-    ai_aktif = False
-else:
+ai_aktif = False
+if "GEMINI_KEY" in st.secrets:
     try:
         genai.configure(api_key=st.secrets["GEMINI_KEY"])
         
-        # Google'ın yeni isimlendirme formatını zorluyoruz
-        # 'gemini-1.5-flash' yerine 'models/gemini-1.5-flash'
-        model = genai.GenerativeModel('models/gemini-1.5-flash')
+        # 404 HATASINI ÖNLEMEK İÇİN: 
+        # Model ismini tırnak içinde tam yol olarak yazıyoruz
+        # Ve en güncel modeli (1.5-flash) hedefliyoruz
+        model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            generation_config={"temperature": 0.7}
+        )
         
-        # Test sorgusu
-        test_res = model.generate_content("Merhaba", generation_config={"max_output_tokens": 5})
+        # Bağlantıyı test et (Hata varsa direkt except'e düşer)
+        response = model.generate_content("test")
         ai_aktif = True
-        st.sidebar.success("✅ AI Bağlantısı Kuruldu (Flash)")
-        
+        st.sidebar.success("✅ Sistem Hazır: AI Aktif")
     except Exception as e:
+        # Eğer yukarıdaki olmazsa eski ama stabil pro modelini dene
         try:
-            # Flash olmazsa Pro'yu da tam isimle dene
-            model = genai.GenerativeModel('models/gemini-pro')
-            test_res = model.generate_content("Merhaba", generation_config={"max_output_tokens": 5})
+            model = genai.GenerativeModel('gemini-pro')
+            model.generate_content("test")
             ai_aktif = True
-            st.sidebar.warning("⚠️ Pro Modeli Aktif")
-        except Exception as e2:
-            st.sidebar.error("❌ Bağlantı hala kurulamadı.")
-            st.sidebar.info("Lütfen Google AI Studio'dan yeni bir API Key alıp Secrets'ı güncelleyin.")
+            st.sidebar.warning("⚠️ Stabil Mod (Pro) Aktif")
+        except:
+            st.sidebar.error(f"❌ Bağlantı Hatası: API Anahtarınızda bir sorun olabilir.")
             ai_aktif = False
+else:
+    st.sidebar.error("❌ Secrets: GEMINI_KEY bulunamadı!")
 # ==========================================
 # 3. AI FONKSİYONLARI (DİNAMİK DİL DESTEKLİ)
 # ==========================================
