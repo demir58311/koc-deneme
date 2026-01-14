@@ -45,17 +45,23 @@ except Exception as e:
 # ==========================================
 
 def ai_cumle_uret(dil, seviye):
-    """Seçilen dilde ve seviyede cümle üretir"""
-    prompt = f"Bana {dil} dilinde, {seviye} seviyesinde bir cümle ve Türkçesini ver. Format: 'cümle|türkçe'. Örn: 'Ich lerne Deutsch|Almanca öğreniyorum'."
+    """Hata payını azaltan güvenli cümle üretme fonksiyonu"""
+    prompt = f"Sen bir dil öğretmenisin. Bana {dil} dilinde, {seviye} seviyesinde bir cümle ve Türkçesini ver. YALNIZCA şu formatı kullan: 'cümle|türkçe'. Örnek: 'I love coding|Kodlamayı seviyorum'."
     try:
         res = model.generate_content(prompt)
+        # Gelen yanıttaki gereksiz karakterleri temizle
         raw = res.text.strip().replace('"', '').replace("*", "")
+        
         if "|" in raw:
-            hedef, tr = raw.split("|")
-            return {"hedef": hedef.strip(), "tr": tr.strip()}
-    except:
-        return {"hedef": "Hata", "tr": "Cümle üretilemedi"}
-
+            parts = raw.split("|")
+            return {"hedef": parts[0].strip(), "tr": parts[1].strip()}
+        else:
+            # Format hatalı gelirse varsayılan bir cümle döndür ki uygulama hata vermesin
+            return {"hedef": "Error: AI sent wrong format", "tr": "Hata: AI yanlış format gönderdi"}
+    except Exception as e:
+        st.error(f"AI Hatası: {str(e)}")
+        return {"hedef": "Hata", "tr": "Bağlantı sorunu"}
+        
 def ai_kontrol_esnek(tahmin, dogru, tr, dil):
     """AI ile anlam kontrolü yapar"""
     prompt = f"Türkçe: '{tr}'. {dil} dilinde beklenen: '{dogru}'. Öğrenci: '{tahmin}'. Anlam doğruysa sadece 'OK' yaz. Yanlışsa Türkçe kısa açıklama yap."
