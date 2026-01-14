@@ -13,41 +13,26 @@ for key, val in {
     'kelime_bilmece': None
 }.items():
     if key not in st.session_state: st.session_state[key] = val
-
 # ==========================================
-# 2. AI BAĞLANTISI
+# 2. AI BAĞLANTISI (HATASIZ VE GÜNCEL)
 # ==========================================
-# Bu kısmı mevcut kodunla değiştir
-# Mevcut try-except bloğunu bununla değiştir
-# Hatalı olan 21-25. satır arasını silip bunu yapıştır:
 try:
     if "GEMINI_KEY" in st.secrets:
         API_KEY = st.secrets["GEMINI_KEY"]
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # En stabil modeli doğrudan tanımlıyoruz
+        target_model = 'gemini-1.5-flash'
+        model = genai.GenerativeModel(target_model)
+        
         ai_aktif = True
+        st.sidebar.success(f"✅ Model Bağlandı: {target_model}")
     else:
-        st.error("Secrets kısmında anahtar bulunamadı!")
+        st.sidebar.error("❌ Hata: Secrets kısmında anahtar bulunamadı!")
         ai_aktif = False
 except Exception as e:
-    st.error(f"Bağlantı hatası: {e}")
+    st.sidebar.error(f"⚠️ Kritik Bağlantı Hatası: {str(e)}")
     ai_aktif = False
-    
-    # Tercih sırasına göre modeli seçiyoruz
-    if 'models/gemini-1.5-flash' in available_models:
-        target_model = 'gemini-1.5-flash'
-    elif 'models/gemini-pro' in available_models:
-        target_model = 'gemini-pro'
-    else:
-        target_model = available_models[0].replace('models/', '') # Bulduğun ilk çalışan modeli al
-
-    model = genai.GenerativeModel(target_model)
-    ai_aktif = True
-    st.sidebar.success(f"Bağlı Model: {target_model}")
-except Exception as e:
-    st.sidebar.error(f"Kritik Bağlantı Hatası: {str(e)}")
-    ai_aktif = False
-
 # ==========================================
 # 3. AI FONKSİYONLARI (DİNAMİK DİL DESTEKLİ)
 # ==========================================
