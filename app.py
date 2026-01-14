@@ -14,24 +14,23 @@ for key, val in {
 }.items():
     if key not in st.session_state: st.session_state[key] = val
 # ==========================================
-# 2. AI BAĞLANTISI (HATASIZ VE GÜNCEL)
+# 2. AI BAĞLANTISI (HATA AVCI SÜRÜMÜ)
 # ==========================================
 try:
     if "GEMINI_KEY" in st.secrets:
         API_KEY = st.secrets["GEMINI_KEY"]
         genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # En stabil modeli doğrudan tanımlıyoruz
-        target_model = 'gemini-1.5-flash'
-        model = genai.GenerativeModel(target_model)
-        
+        # Test isteği gönderelim (Gerçekten çalışıyor mu?)
+        test_res = model.generate_content("Hi") 
         ai_aktif = True
-        st.sidebar.success(f"✅ Model Bağlandı: {target_model}")
+        st.sidebar.success("✅ Bağlantı Başarılı!")
     else:
-        st.sidebar.error("❌ Hata: Secrets kısmında anahtar bulunamadı!")
+        st.sidebar.error("❌ Secrets içinde 'GEMINI_KEY' bulunamadı!")
         ai_aktif = False
 except Exception as e:
-    st.sidebar.error(f"⚠️ Kritik Bağlantı Hatası: {str(e)}")
+    st.sidebar.error(f"⚠️ Teknik Hata: {str(e)}")
     ai_aktif = False
 # ==========================================
 # 3. AI FONKSİYONLARI (DİNAMİK DİL DESTEKLİ)
