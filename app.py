@@ -14,32 +14,34 @@ for key, val in {
 }.items():
     if key not in st.session_state: st.session_state[key] = val
 # ==========================================
-# 2. AI BAĞLANTISI (ZORLANMIŞ V1 SÜRÜMÜ)
+# 2. AI BAĞLANTISI (KESİN ÇÖZÜM - MODEL FIX)
 # ==========================================
 if "GEMINI_KEY" not in st.secrets:
     st.sidebar.error("❌ Secrets: GEMINI_KEY bulunamadı!")
     ai_aktif = False
 else:
     try:
-        # API'yi en güncel v1 sürümüne zorluyoruz
-        genai.configure(api_key=st.secrets["GEMINI_KEY"], transport='rest')
+        genai.configure(api_key=st.secrets["GEMINI_KEY"])
         
-        # En yeni model ismini doğrudan deniyoruz
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Google'ın yeni isimlendirme formatını zorluyoruz
+        # 'gemini-1.5-flash' yerine 'models/gemini-1.5-flash'
+        model = genai.GenerativeModel('models/gemini-1.5-flash')
         
-        # Basit bir test
-        test_res = model.generate_content("Hi")
+        # Test sorgusu
+        test_res = model.generate_content("Merhaba", generation_config={"max_output_tokens": 5})
         ai_aktif = True
-        st.sidebar.success("✅ AI Aktif (Flash)")
+        st.sidebar.success("✅ AI Bağlantısı Kuruldu (Flash)")
+        
     except Exception as e:
         try:
-            # Flash olmazsa Pro modelini deniyoruz
-            model = genai.GenerativeModel('gemini-pro')
-            test_res = model.generate_content("Hi")
+            # Flash olmazsa Pro'yu da tam isimle dene
+            model = genai.GenerativeModel('models/gemini-pro')
+            test_res = model.generate_content("Merhaba", generation_config={"max_output_tokens": 5})
             ai_aktif = True
             st.sidebar.warning("⚠️ Pro Modeli Aktif")
         except Exception as e2:
-            st.sidebar.error(f"❌ Kritik Hata: {str(e2)}")
+            st.sidebar.error("❌ Bağlantı hala kurulamadı.")
+            st.sidebar.info("Lütfen Google AI Studio'dan yeni bir API Key alıp Secrets'ı güncelleyin.")
             ai_aktif = False
 # ==========================================
 # 3. AI FONKSİYONLARI (DİNAMİK DİL DESTEKLİ)
