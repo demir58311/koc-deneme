@@ -46,22 +46,25 @@ else:
 # ==========================================
 
 def ai_cumle_uret(dil, seviye):
-    """Hata payını azaltan güvenli cümle üretme fonksiyonu"""
-    prompt = f"Sen bir dil öğretmenisin. Bana {dil} dilinde, {seviye} seviyesinde bir cümle ve Türkçesini ver. YALNIZCA şu formatı kullan: 'cümle|türkçe'. Örnek: 'I love coding|Kodlamayı seviyorum'."
+    prompt = f"Sen bir dil öğretmenisin. Bana {dil} dilinde, {seviye} seviyesinde bir cümle ve Türkçesini ver. Format: 'cümle|türkçe'. Örn: 'Ich lerne Deutsch|Almanca öğreniyorum'."
     try:
+        # ai_aktif kontrolü ekliyoruz
+        if not ai_aktif:
+            return {"hedef": "Hata", "tr": "Yapay zeka şu an aktif değil."}
+            
         res = model.generate_content(prompt)
-        # Gelen yanıttaki gereksiz karakterleri temizle
-        raw = res.text.strip().replace('"', '').replace("*", "")
         
-        if "|" in raw:
-            parts = raw.split("|")
-            return {"hedef": parts[0].strip(), "tr": parts[1].strip()}
-        else:
-            # Format hatalı gelirse varsayılan bir cümle döndür ki uygulama hata vermesin
-            return {"hedef": "Error: AI sent wrong format", "tr": "Hata: AI yanlış format gönderdi"}
+        if res and res.text:
+            raw = res.text.strip().replace('"', '').replace("*", "")
+            if "|" in raw:
+                parts = raw.split("|")
+                return {"hedef": parts[0].strip(), "tr": parts[1].strip()}
+        
+        return {"hedef": "Hata", "tr": "AI yanıt formatı hatalı."}
     except Exception as e:
-        st.error(f"AI Hatası: {str(e)}")
-        return {"hedef": "Hata", "tr": "Bağlantı sorunu"}
+        # Hatayı terminale veya ekrana basarak ne olduğunu anlayalım
+        print(f"Üretim Hatası: {e}") 
+        return {"hedef": "Hata", "tr": f"Cümle kurulamadı: {str(e)}"}
         
 def ai_kontrol_esnek(tahmin, dogru, tr, dil):
     """AI ile anlam kontrolü yapar"""
@@ -107,18 +110,27 @@ if st.sidebar.button("Verileri Sıfırla"):
 # ==========================================
 # 5. OYUN MODLARI
 # ==========================================
-
 # --- MOD 1: ÇEVİRİ ---
 if mod == "Çeviri (TR -> Hedef)":
     st.header(f"🌐 Türkçe ➔ {dil_secimi} Çeviri ({seviye_secimi})")
     
+    # Kullanıcıya ne yapacağını söyleyen bir bilgi kutusu (Hata yazısı yerine bu görünecek)
+    if not st.session_state.soru:
+        st.info(f"Henüz bir soru üretilmedi. Pratiğe başlamak için aşağıdaki butona basın.")
+
     if st.button("Yeni Soru Üret ✨"):
         with st.spinner("AI hazırlanıyor..."):
-            st.session_state.soru = ai_cumle_uret(dil_secimi, seviye_secimi)
-            st.session_state.cevap_verildi = False
-            st.rerun()
+            yeni_soru = ai_cumle_uret(dil_secimi, seviye_secimi)
+            # Eğer AI gerçekten bir cümle ürettiyse hafızaya al
+            if yeni_soru and "Hata" not in yeni_soru["hedef"]:
+                st.session_state.soru = yeni_soru
+                st.session_state.cevap_verildi = False
+                st.rerun()
+            else:
+                st.error(f"AI şu an cevap veremiyor: {yeni_soru['tr']}")
     
-    if st.session_state.soru:
+    # SADECE soru üretildiyse aşağıdaki giriş alanlarını göster
+    if st.session_state.soru and "Hata" not in st.session_state.soru["hedef"]:
         s = st.session_state.soru
         st.subheader(f"🇹🇷 {s['tr']}")
         tahmin = st.text_input(f"{dil_secimi} karşılığını yazın:", key="trans_in")
@@ -134,7 +146,6 @@ if mod == "Çeviri (TR -> Hedef)":
             else:
                 st.error(f"❌ Hata!")
                 st.info(f"Öğretmen Notu: {sonuc}")
-
 # --- MOD 2: KARIŞIK KELİMELER ---
 elif mod == "Karışık Kelimeler":
     st.header(f"🔀 Kelime Sıralama ({dil_secimi})")
